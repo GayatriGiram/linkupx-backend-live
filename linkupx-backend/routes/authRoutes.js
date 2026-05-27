@@ -1015,12 +1015,12 @@ router.get("/search-users", async (req, res) => {
     const users = await User.find({ fullName: { $regex: query, $options: "i" } }).select("_id");
     const userIds = users.map(u => u._id);
 
-    // 2. Search in standard posts (by snapshot name, user ID, OR content)
+    // 2. Search in standard posts (by snapshot name, user ID, OR text)
     const standardPosts = await Post.find({
       $or: [
         { "userSnapshot.fullName": { $regex: query, $options: "i" } },
         { user: { $in: userIds } },
-        { content: { $regex: query, $options: "i" } }
+        { text: { $regex: query, $options: "i" } }
       ]
     })
     .populate("user", "fullName profileImage role")
@@ -1029,13 +1029,13 @@ router.get("/search-users", async (req, res) => {
     .limit(20)
     .lean();
 
-    // 3. Search in alumni posts (by snapshot name, user ID, content, OR job details)
+    // 3. Search in alumni posts (by snapshot name, user ID, text, OR job details)
     const alumniPosts = await AlumniPost.find({
       $or: [
         { "userSnapshot.fullName": { $regex: query, $options: "i" } },
         { user: { $in: userIds } },
-        { content: { $regex: query, $options: "i" } },
-        { "jobDetails.role": { $regex: query, $options: "i" } },
+        { text: { $regex: query, $options: "i" } },
+        { "jobDetails.title": { $regex: query, $options: "i" } },
         { "jobDetails.company": { $regex: query, $options: "i" } },
         { "jobDetails.description": { $regex: query, $options: "i" } },
         { "jobDetails.type": { $regex: query, $options: "i" } },
