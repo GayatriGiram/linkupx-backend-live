@@ -1008,19 +1008,24 @@ router.get("/search-users", async (req, res) => {
       return res.status(200).json({ success: true, posts: [] });
     }
 
+    // Escape special regex characters to prevent errors
+    const safeQuery = query.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    // Replace spaces with \s* so it matches regardless of spacing (e.g., "software developer" matches "softwaredeveloper" and "software   developer")
+    const flexibleQuery = safeQuery.replace(/\s+/g, "\\s*");
+
     const Post = require("../models/post");
     const AlumniPost = require("../models/alumnipost");
 
     // 1. Find users whose names match the query
-    const users = await User.find({ fullName: { $regex: query, $options: "i" } }).select("_id");
+    const users = await User.find({ fullName: { $regex: flexibleQuery, $options: "i" } }).select("_id");
     const userIds = users.map(u => u._id);
 
     // 2. Search in standard posts (by snapshot name, user ID, OR text)
     const standardPosts = await Post.find({
       $or: [
-        { "userSnapshot.fullName": { $regex: query, $options: "i" } },
+        { "userSnapshot.fullName": { $regex: flexibleQuery, $options: "i" } },
         { user: { $in: userIds } },
-        { text: { $regex: query, $options: "i" } }
+        { text: { $regex: flexibleQuery, $options: "i" } }
       ]
     })
     .populate("user", "fullName profileImage role")
@@ -1032,14 +1037,14 @@ router.get("/search-users", async (req, res) => {
     // 3. Search in alumni posts (by snapshot name, user ID, text, OR job details)
     const alumniPosts = await AlumniPost.find({
       $or: [
-        { "userSnapshot.fullName": { $regex: query, $options: "i" } },
+        { "userSnapshot.fullName": { $regex: flexibleQuery, $options: "i" } },
         { user: { $in: userIds } },
-        { text: { $regex: query, $options: "i" } },
-        { "jobDetails.title": { $regex: query, $options: "i" } },
-        { "jobDetails.company": { $regex: query, $options: "i" } },
-        { "jobDetails.description": { $regex: query, $options: "i" } },
-        { "jobDetails.type": { $regex: query, $options: "i" } },
-        { "jobDetails.location": { $regex: query, $options: "i" } }
+        { text: { $regex: flexibleQuery, $options: "i" } },
+        { "jobDetails.title": { $regex: flexibleQuery, $options: "i" } },
+        { "jobDetails.company": { $regex: flexibleQuery, $options: "i" } },
+        { "jobDetails.description": { $regex: flexibleQuery, $options: "i" } },
+        { "jobDetails.type": { $regex: flexibleQuery, $options: "i" } },
+        { "jobDetails.location": { $regex: flexibleQuery, $options: "i" } }
       ]
     })
     .populate("user", "fullName profileImage role")
