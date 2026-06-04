@@ -58,6 +58,8 @@ const userSchema = new mongoose.Schema(
     jobRole: { type: String, default: "" },
     location: { type: String, default: "" },
     experience: { type: String, default: "" },
+    graduationYear: { type: String, default: "" },
+    graduationBranch: { type: String, default: "" },
     previousCompanies: { type: [String], default: [] },
     skills: { type: [String], default: [] },
     linkedinProfile: { type: String, default: "" },

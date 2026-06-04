@@ -397,7 +397,7 @@ router.put("/update-profile", async (req, res) => {
   try {
     const { 
       userId, fullName, email, role,
-      currentCompany, jobRole, location, experience, previousCompanies, 
+      currentCompany, jobRole, location, experience, graduationYear, graduationBranch, previousCompanies, 
       skills, linkedinProfile, portfolioWebsite, awards, publications, 
       certifications, mentorshipAvailability, mentorshipDetails,
       pursuing, tenthCollege, tenthMarks, twelfthCollege, twelfthMarks,
@@ -446,6 +446,8 @@ router.put("/update-profile", async (req, res) => {
     if (jobRole !== undefined) user.jobRole = jobRole;
     if (location !== undefined) user.location = location;
     if (experience !== undefined) user.experience = experience;
+    if (graduationYear !== undefined) user.graduationYear = graduationYear;
+    if (graduationBranch !== undefined) user.graduationBranch = graduationBranch;
     if (previousCompanies !== undefined) user.previousCompanies = previousCompanies;
     if (skills !== undefined) user.skills = skills;
     if (linkedinProfile !== undefined) user.linkedinProfile = linkedinProfile;
@@ -1062,6 +1064,35 @@ router.get("/search-users", async (req, res) => {
   } catch (err) {
     console.log("🔥 SEARCH POSTS ERROR:", err.message);
     return res.status(500).json({ message: "Error searching posts", error: err.message });
+  }
+});
+
+// ==========================================
+// ADMIN ROUTE: GET ALL USERS
+// ==========================================
+router.get("/admin/users", async (req, res) => {
+  try {
+    const { adminId } = req.query;
+
+    if (!adminId) {
+      return res.status(400).json({ success: false, message: "Admin ID is required" });
+    }
+
+    // Verify Admin
+    const admin = await User.findById(adminId);
+    if (!admin || admin.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Access Denied: Not an admin" });
+    }
+
+    // Fetch all users except passwords and relationships
+    const users = await User.find()
+      .select("-password -followers -following -likes -saves")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, users });
+  } catch (error) {
+    console.error("🔥 Fetch Admin Users Error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
